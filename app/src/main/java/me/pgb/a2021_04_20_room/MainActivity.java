@@ -43,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
     private Button insertStock;
     private Button deleteButton;
     private Button findButton;
-    private Button findAndDeleteButton;
     private EditText stockName;
     private EditText stockPrice;
 
@@ -93,7 +92,8 @@ public class MainActivity extends AppCompatActivity {
 
                 Stock stock;
 
-                stock = new Stock("NONE", 0.0);
+                String name = stockName.getText().toString();
+                stock = new Stock(name, 0.0);
                 stock.setId(stock_ID);
 
                 observable = io.reactivex.Observable.just(stock);
