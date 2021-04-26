@@ -8,6 +8,7 @@ import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModelProvider;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.annotations.NonNull;
@@ -22,16 +23,31 @@ import android.view.View;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.EditText;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import javax.security.auth.login.LoginException;
 
 public class MainActivity extends AppCompatActivity {
 
     private static String TAG = "_MAINACT_";
-    private PortfolioDao portfolioDao;
-    private LiveData<List<Stock>> allStocks;
-    private PortfolioDatabase portfolioDatabase;
+
+    private int stock_ID;
     private Observable<Stock> observable;
+
+    private PortfolioViewModel portfolioViewModel;
+
+    private Button insertStock;
+    private Button deleteButton;
+    private Button findButton;
+    private Button findAndDeleteButton;
+    private EditText stockName;
+    private EditText stockPrice;
+
+    private DataOperation dataOperation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,18 +56,77 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        portfolioDatabase = PortfolioDatabase.getInstance(getApplicationContext());
-        portfolioDao = portfolioDatabase.portfolioDao();
-        allStocks = portfolioDao.getAll();
-        Stock stock = new Stock("CSE 3200", 99.9);
+        portfolioViewModel = new ViewModelProvider(this).get(PortfolioViewModel.class);
+
+        insertStock = findViewById(R.id.insert_button);
+        deleteButton = findViewById(R.id.delete_button);
+        findButton = findViewById(R.id.find_button);
+
+        stockName = findViewById(R.id.name_textView);
+        stockPrice = findViewById(R.id.price_textView);
+
+        insertStock.setOnClickListener(new View.OnClickListener() {
+           @Override
+           public void onClick(View v) {
+
+               dataOperation = DataOperation.INSERT;
+               Stock stock;
+               if (0 == stockName.getText().toString().length()) {
+                   stock = new Stock("CSE 3200", 99.9);
+               } else {
+                   double price = Double.valueOf(stockPrice.getText().toString()).doubleValue();
+                   stock = new Stock(stockName.getText().toString(), price);
+               }
+               observable = io.reactivex.Observable.just(stock);
+               Observer<Stock> observer = getStockObserver(stock);
+
+               observable
+                       .observeOn(Schedulers.io())
+                       .subscribe(observer);
+           }
+       });
+
+        deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dataOperation = DataOperation.DELETE;
+
+                Stock stock;
+
+                stock = new Stock("NONE", 0.0);
+                stock.setId(stock_ID);
+
+                observable = io.reactivex.Observable.just(stock);
+                Observer<Stock> observer = getStockObserver(stock);
+
+                observable
+                        .observeOn(Schedulers.io())
+                        .subscribe(observer);
+            }
+        });
+
+        findButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dataOperation = DataOperation.GET_STOCK;
+
+                findStock(stockName.getText().toString());
+                Log.i(TAG, "Stock " + stock_ID);
+            }
+        });
+
+    }
+
+    // sets stock_ID
+    public void findStock(String name) {
+        dataOperation = DataOperation.GET_STOCK;
+        Stock stock = new Stock(name, 0.0);
         observable = io.reactivex.Observable.just(stock);
         Observer<Stock> observer = getStockObserver(stock);
 
         observable
                 .observeOn(Schedulers.io())
                 .subscribe(observer);
-
-
     }
 
     private Observer<Stock> getStockObserver(Stock stock) { // OBSERVER
@@ -63,7 +138,34 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onNext(@NonNull Stock stock) {
-                portfolioDatabase.portfolioDao().insert(stock);
+                switch(dataOperation) {
+                    case INSERT:
+                        portfolioViewModel.getPortfolioDatabase().portfolioDao().insert(stock);
+                        break;
+                    case DELETE:
+                        if (-1 == stock_ID) {
+                            Log.e(TAG, "Dont' delete a non-existant stock");
+                        } else {
+                            portfolioViewModel.getPortfolioDatabase().portfolioDao().delete(stock);
+                        }
+                        break;
+                    case GET_STOCK:
+                        Stock actualStock = portfolioViewModel.getPortfolioDatabase().portfolioDao().getStock(stock.name);
+                        if (null == actualStock){
+                            Log.e(TAG, "No stock found! " );
+                            // handle error!
+                            stock_ID = -1;
+                        } else {
+                            Log.i(TAG, "Get stock ID: " + String.valueOf(actualStock.id).toString());
+                            stock_ID = actualStock.id;
+                        }
+                        break;
+                    case UPDATE:
+                        Log.i(TAG, "Delete");
+                        break;
+                    default:
+                        Log.i(TAG, "Default");
+                }
             }
 
             @Override

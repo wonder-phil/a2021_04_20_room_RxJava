@@ -1,6 +1,7 @@
 package me.pgb.a2021_04_20_room.db;
 
 
+import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
@@ -8,10 +9,13 @@ import androidx.room.PrimaryKey;
 @Entity
 public class Stock {
 
-    public Stock(String name, double price) {
+    public Stock(@NonNull String name, double price) {
         this.name = name;
         this.price = price;
     }
+
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     @PrimaryKey(autoGenerate = true)
     public int id;

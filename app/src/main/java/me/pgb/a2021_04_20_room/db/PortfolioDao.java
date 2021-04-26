@@ -21,13 +21,13 @@ public interface PortfolioDao {
     @Update
     public void update(Stock stock);
 
+    @Query("SELECT * FROM stock WHERE name = :name")
+    public Stock getStock(String name);
+
     @Query("SELECT * FROM stock")
     LiveData<List<Stock>> getAll();
 
     @Query("DELETE FROM stock")
     void deleteAll();
-
-
-
 
 }

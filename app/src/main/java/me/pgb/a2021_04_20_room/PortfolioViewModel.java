@@ -12,17 +12,21 @@ import me.pgb.a2021_04_20_room.db.Stock;
 
 public class PortfolioViewModel extends AndroidViewModel {
 
-
-
         private LiveData<List<Stock>> allStocks;
+        private static PortfolioDatabase portfolioDatabase;
 
         public PortfolioViewModel(@NonNull Application application) {
             super(application);
 
-            allStocks = PortfolioDatabase .getInstance(application.getApplicationContext()).portfolioDao().getAll();
+            portfolioDatabase = PortfolioDatabase.getInstance(application);
+            allStocks = portfolioDatabase.portfolioDao().getAll();
         }
 
         public LiveData<List<Stock>> getAllStocks() {
             return allStocks;
+        }
+
+        public static PortfolioDatabase getPortfolioDatabase() {
+            return portfolioDatabase;
         }
 }

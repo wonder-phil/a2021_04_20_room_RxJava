@@ -8,7 +8,7 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = {Stock.class}, version = 1)
+@Database(entities = {Stock.class}, version = 4)
 public abstract class PortfolioDatabase extends RoomDatabase {
 
     public abstract PortfolioDao portfolioDao();
